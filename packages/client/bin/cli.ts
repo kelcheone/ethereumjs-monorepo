@@ -80,10 +80,15 @@ const args = require('yargs')
       boolean: true,
       default: Config.RPC_DEFAULT,
     },
-    rpcport: {
+    rpcHttpPort: {
       describe: 'HTTP-RPC server listening port',
       number: true,
-      default: Config.RPCPORT_DEFAULT,
+      default: Config.RPCHTTPPORT_DEFAULT,
+    },
+    rpcWssPort: {
+      describe: 'WSS-RPC server listening port',
+      number: true,
+      default: Config.RPCWSSPORT_DEFAULT,
     },
     rpcaddr: {
       describe: 'HTTP-RPC server listening interface',
@@ -194,11 +199,13 @@ async function runNode(config: Config) {
 }
 
 function runRpcServer(client: EthereumClient, config: Config) {
-  const { rpcport, rpcaddr } = config
+  const { rpcHttpPort, rpcWssPort, rpcaddr } = config
   const manager = new RPCManager(client, config)
   const server = new RPCServer(manager.getMethods())
-  config.logger.info(`RPC HTTP endpoint opened: http://${rpcaddr}:${rpcport}`)
-  server.http().listen(rpcport)
+  config.logger.info(`RPC HTTP endpoint opened: http://${rpcaddr}:${rpcHttpPort}`)
+  config.logger.info(`RPC WSS endpoint opened: http://${rpcaddr}:${rpcWssPort}`)
+  server.http().listen(rpcHttpPort)
+  server.websocket({ port: rpcWssPort })
 
   return server
 }
@@ -393,7 +400,8 @@ async function run() {
     port: args.port,
     multiaddrs: args.multiaddrs ? parseMultiaddrs(args.multiaddrs) : undefined,
     rpc: args.rpc,
-    rpcport: args.rpcport,
+    rpcHttpPort: args.rpcHttpPort,
+    rpcWssPort: args.rpcWssPort,
     rpcaddr: args.rpcaddr,
     loglevel: args.loglevel,
     maxPerRequest: args.maxPerRequest,
