@@ -14,6 +14,7 @@ import EthereumClient from '../lib/client'
 import { Config } from '../lib/config'
 import { Logger } from '../lib/logging'
 import { RPCManager } from '../lib/rpc'
+import * as modules from '../lib/rpc/modules'
 import { Event } from '../lib/types'
 import type { Chain as IChain, GenesisState } from '@ethereumjs/common/dist/types'
 const level = require('level')
@@ -86,6 +87,10 @@ const args = require('yargs')
     rpcAddr: {
       describe: 'HTTP-RPC server listening interface',
       default: Config.RPCADDR_DEFAULT,
+    },
+    helprpc: {
+      describe: 'Display the JSON RPC help with a list of all RPC methods implemented (and exit)',
+      boolean: true,
     },
     loglevel: {
       describe: 'Logging verbosity',
@@ -181,7 +186,7 @@ async function runNode(config: Config) {
     config.logger.info(`Listener up transport=${details.transport} url=${details.url}`)
   })
   config.events.on(Event.SYNC_SYNCHRONIZED, (height) => {
-    client.config.logger.info(`Synchronized blockchain at height ${height.toNumber()}`)
+    client.config.logger.info(`Synchronized blockchain at height ${height}`)
   })
   config.logger.info(`Connecting to network: ${config.chainCommon.chainName()}`)
   await client.open()
@@ -209,6 +214,23 @@ function runRpcServer(client: EthereumClient, config: Config) {
  * Main entry point to start a client
  */
 async function run() {
+  if (args.helprpc) {
+    // Display RPC help and exit
+    console.log('-'.repeat(27))
+    console.log('JSON-RPC: Supported Methods')
+    console.log('-'.repeat(27))
+    console.log()
+    modules.list.forEach((modName: string) => {
+      console.log(`${modName}:`)
+      RPCManager.getMethodNames((modules as any)[modName]).forEach((methodName: string) => {
+        console.log(`-> ${modName.toLowerCase()}_${methodName}`)
+      })
+      console.log()
+    })
+    console.log()
+    process.exit()
+  }
+
   // give network id precedence over network name
   const chain = args.networkId ?? args.network ?? Chain.Mainnet
 
@@ -275,10 +297,14 @@ async function run() {
       removeSync(`${args.datadir}/devnet`)
       // Create new account
       const privKey = randomBytes(32)
-      const account = Address.fromPrivateKey(privKey)
-      accounts.push([account, privKey])
-      // prettier-ignore
-      console.log(`==================================================\nAccount generated for mining blocks:\nAddress: ${account.toString()}\nPrivate key: 0x${privKey.toString( 'hex')}\nWARNING: Do not use this account for mainnet funds\n==================================================`)
+      const address = Address.fromPrivateKey(privKey)
+      accounts.push([address, privKey])
+      console.log('='.repeat(50))
+      console.log('Account generated for mining blocks:')
+      console.log(`Address: ${address}`)
+      console.log(`Private key: 0x${privKey.toString('hex')}`)
+      console.log('WARNING: Do not use this account for mainnet funds')
+      console.log('='.repeat(50))
     }
 
     const prefundAddress = accounts[0][0].toString().slice(2)
@@ -362,10 +388,8 @@ async function run() {
   } else if (args.gethGenesis) {
     // Use geth genesis parameters file if specified
     const genesisFile = JSON.parse(readFileSync(args.gethGenesis, 'utf-8'))
-    const genesisParams = await parseCustomParams(
-      genesisFile,
-      path.parse(args.gethGenesis).base.split('.')[0]
-    )
+    const chainName = path.parse(args.gethGenesis).base.split('.')[0]
+    const genesisParams = await parseCustomParams(genesisFile, chainName)
     const genesisState = genesisFile.alloc ? await parseGenesisState(genesisFile) : {}
     common = new Common({
       chain: genesisParams.name,
