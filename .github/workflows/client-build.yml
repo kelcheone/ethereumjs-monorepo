@@ -69,4 +69,4 @@ jobs:
       - run: npm i
         working-directory: ${{github.workspace}}
 
-      - run: npm run test:cli -- --network=${{matrix.network}} --syncmode=${{matrix.syncmode}} --transports rlpx --rpc
+      - run: npm run test:cli -- --network=${{matrix.network}} --syncmode=${{matrix.syncmode}} --transports rlpx

@@ -99,14 +99,14 @@ export interface ConfigOptions {
    *
    * Default: 8545
    */
-  rpcHttpPort?: number
+  rpcHttpPort?: number | boolean
 
   /**
    * WSS-RPC server listening port
    *
    * Default: 8544
    */
-  rpcWssPort?: number
+  rpcWsPort?: number | boolean
   /**
    * RPC server listening interface
    */
@@ -220,8 +220,8 @@ export class Config {
   public static readonly TRANSPORTS_DEFAULT = ['rlpx', 'libp2p']
   public static readonly PORT_DEFAULT = 30303
   public static readonly RPC_DEFAULT = false
-  public static readonly RPCHTTPPORT_DEFAULT = 8545
-  public static readonly RPCWSSPORT_DEFAULT = 8544
+  public static readonly RPCHTTPPORT_DEFAULT = false
+  public static readonly RPCWSPORT_DEFAULT = false
   public static readonly RPCADDR_DEFAULT = 'localhost'
   public static readonly LOGLEVEL_DEFAULT = 'info'
   public static readonly MAXPERREQUEST_DEFAULT = 50
@@ -241,8 +241,8 @@ export class Config {
   public readonly port?: number
   public readonly multiaddrs?: Multiaddr[]
   public readonly rpc: boolean
-  public readonly rpcHttpPort: number
-  public readonly rpcWssPort: number
+  public readonly rpcHttpPort: number | boolean
+  public readonly rpcWsPort: number | boolean
   public readonly rpcaddr: string
   public readonly loglevel: string
   public readonly maxPerRequest: number
@@ -278,7 +278,7 @@ export class Config {
     this.key = options.key ?? genPrivateKey()
     this.rpc = options.rpc ?? Config.RPC_DEFAULT
     this.rpcHttpPort = options.rpcHttpPort ?? Config.RPCHTTPPORT_DEFAULT
-    this.rpcWssPort = options.rpcWssPort ?? Config.RPCWSSPORT_DEFAULT
+    this.rpcWsPort = options.rpcWsPort ?? Config.RPCWSPORT_DEFAULT
     this.rpcaddr = options.rpcaddr ?? Config.RPCADDR_DEFAULT
     this.loglevel = options.loglevel ?? Config.LOGLEVEL_DEFAULT
     this.maxPerRequest = options.maxPerRequest ?? Config.MAXPERREQUEST_DEFAULT

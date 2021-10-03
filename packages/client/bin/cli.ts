@@ -75,22 +75,15 @@ const args = require('yargs')
       describe: 'Network multiaddrs',
       array: true,
     },
-    rpc: {
-      describe: 'Enable the JSON-RPC server',
-      boolean: true,
-      default: Config.RPC_DEFAULT,
-    },
     rpcHttpPort: {
       describe: 'HTTP-RPC server listening port',
-      number: true,
       default: Config.RPCHTTPPORT_DEFAULT,
     },
-    rpcWssPort: {
-      describe: 'WSS-RPC server listening port',
-      number: true,
-      default: Config.RPCWSSPORT_DEFAULT,
+    rpcWsPort: {
+      describe: 'WS-RPC server listening port',
+      default: Config.RPCWSPORT_DEFAULT,
     },
-    rpcaddr: {
+    rpcAddr: {
       describe: 'HTTP-RPC server listening interface',
       default: Config.RPCADDR_DEFAULT,
     },
@@ -199,13 +192,16 @@ async function runNode(config: Config) {
 }
 
 function runRpcServer(client: EthereumClient, config: Config) {
-  const { rpcHttpPort, rpcWssPort, rpcaddr } = config
+  const { rpcHttpPort, rpcWsPort, rpcaddr } = config
   const manager = new RPCManager(client, config)
   const server = new RPCServer(manager.getMethods())
-  config.logger.info(`RPC HTTP endpoint opened: http://${rpcaddr}:${rpcHttpPort}`)
-  config.logger.info(`RPC WSS endpoint opened: ws://${rpcaddr}:${rpcWssPort}`)
-  server.http().listen(rpcHttpPort)
-  server.websocket({ port: rpcWssPort })
+  typeof rpcHttpPort === 'number' &&
+    config.logger.info(`RPC HTTP endpoint opened: http://${rpcaddr}:${rpcHttpPort}`)
+  typeof rpcHttpPort === 'number' && server.http().listen(rpcHttpPort)
+  rpcWsPort !== false && typeof rpcWsPort === 'number' && server.websocket({ port: rpcWsPort })
+  rpcWsPort !== false &&
+    typeof rpcWsPort === 'number' &&
+    config.logger.info(`RPC WSS endpoint opened: ws://${rpcaddr}:${rpcWsPort}`)
   return server
 }
 
@@ -400,7 +396,7 @@ async function run() {
     multiaddrs: args.multiaddrs ? parseMultiaddrs(args.multiaddrs) : undefined,
     rpc: args.rpc,
     rpcHttpPort: args.rpcHttpPort,
-    rpcWssPort: args.rpcWssPort,
+    rpcWsPort: args.rpcWsPort,
     rpcaddr: args.rpcaddr,
     loglevel: args.loglevel,
     maxPerRequest: args.maxPerRequest,
@@ -419,7 +415,10 @@ async function run() {
   config.events.setMaxListeners(50)
 
   const client = await runNode(config)
-  const server = config.rpc ? runRpcServer(client, config) : null
+  const server =
+    typeof config.rpcHttpPort === 'number' || typeof config.rpcWsPort === 'number'
+      ? runRpcServer(client, config)
+      : null
 
   process.on('SIGINT', async () => {
     config.logger.info('Caught interrupt signal. Shutting down...')
