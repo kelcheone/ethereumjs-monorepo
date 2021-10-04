@@ -19,7 +19,7 @@ tape('[CLI]', (t) => {
       child.kill('SIGINT')
     }
 
-    child.stdout.on('data', async (data) => {
+    child.stdout.on('data', (data) => {
       const message = data.toString()
 
       // log message for easier debugging
