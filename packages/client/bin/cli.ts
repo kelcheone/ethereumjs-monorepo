@@ -206,7 +206,7 @@ function runRpcServer(client: EthereumClient, config: Config) {
   rpcWsPort !== false && typeof rpcWsPort === 'number' && server.websocket({ port: rpcWsPort })
   rpcWsPort !== false &&
     typeof rpcWsPort === 'number' &&
-    config.logger.info(`RPC WSS endpoint opened: ws://${rpcaddr}:${rpcWsPort}`)
+    config.logger.info(`RPC WS endpoint opened: ws://${rpcaddr}:${rpcWsPort}`)
   return server
 }
 
