@@ -3,7 +3,7 @@ import tape from 'tape'
 import { Client } from 'jayson/promise'
 
 // get args for --network and --syncmode
-const cliArgs = ['--rpc', '--dev']
+const cliArgs = ['--rpcHttpPort=8545', '--rpcWsPort=8544', '--dev', '--transports=rlpx']
 
 tape('[CLI]', (t) => {
   t.test('should call http and ws RPCs', { timeout: 260000 }, (t) => {
