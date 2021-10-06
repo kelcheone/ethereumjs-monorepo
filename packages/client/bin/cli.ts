@@ -200,13 +200,14 @@ function runRpcServer(client: EthereumClient, config: Config) {
   const { rpcHttpPort, rpcWsPort, rpcaddr } = config
   const manager = new RPCManager(client, config)
   const server = new RPCServer(manager.getMethods())
-  typeof rpcHttpPort === 'number' &&
+  if (typeof rpcHttpPort === 'number') {
+    server.http().listen(rpcHttpPort)
     config.logger.info(`RPC HTTP endpoint opened: http://${rpcaddr}:${rpcHttpPort}`)
-  typeof rpcHttpPort === 'number' && server.http().listen(rpcHttpPort)
-  rpcWsPort !== false && typeof rpcWsPort === 'number' && server.websocket({ port: rpcWsPort })
-  rpcWsPort !== false &&
-    typeof rpcWsPort === 'number' &&
+  }
+  if (typeof rpcWsPort === 'number') {
+    server.websocket({ port: rpcWsPort })
     config.logger.info(`RPC WS endpoint opened: ws://${rpcaddr}:${rpcWsPort}`)
+  }
   return server
 }
 
